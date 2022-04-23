@@ -118,12 +118,7 @@ Eigen::Vector3f texture_fragment_shader(const fragment_shader_payload& payload)
         // TODO: Get the texture value at the texture coordinates of the current fragment
         auto texture = payload.texture;
         auto texcord = payload.tex_coords;
-        float u,v;
-        u = 1.0*texcord.x();
-        v = 1.0*texcord.y();
-        std::cout<<"get texture"<<std::endl;
-        std::cout<<"u:"<<u<<"  v:"<<v<<std::endl;
-        return_color = texture->getColor(u,v);
+        return_color = texture->getColor(texcord.x(),texcord.y());
     }
     Eigen::Vector3f texture_color;
     texture_color << return_color.x(), return_color.y(), return_color.z();
@@ -240,18 +235,40 @@ Eigen::Vector3f displacement_fragment_shader(const fragment_shader_payload& payl
     // Vector ln = (-dU, -dV, 1)
     // Position p = p + kn * n * h(u,v)
     // Normal n = normalize(TBN * ln)
-
-
-    Eigen::Vector3f result_color = {0, 0, 0};
-
-    for (auto& light : lights)
+    Eigen::Vector3f n = normal;
+    Eigen::Vector3f t;
+    t << n.x()*n.y()/sqrt(n.x()*n.x()+n.z()*n.z()),sqrt(n.x()*n.x()+n.z()*n.z()),n.z()*n.y()/sqrt(n.x()*n.x()+n.z()*n.z());
+    auto b = n.cross(t);
+    Eigen::Matrix3f TBN;
+    TBN<< t[0],b[0],n[0],t[1],b[1],n[1],t[2],b[2],n[2];
+    if (payload.texture)
     {
-        // TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
-        // components are. Then, accumulate that result on the *result_color* object.
-
-
+        auto texture = payload.texture;
+        auto texcord = payload.tex_coords;
+        float u = texcord.x();
+        float v = texcord.y();
+        auto dU = kh*kn*(texture->getColor(u+1.0/texture->width,v).norm()-texture->getColor(u,v).norm());
+        auto dV = kh*kn*(texture->getColor(u,v+1.0/texture->height).norm()-texture->getColor(u,v).norm());
+        Eigen::Vector3f ln({-dU,-dV,1});
+        n = TBN*ln;
+        n = n.normalized();
+        point = point + kn*n*texture->getColor(u,v).norm();
     }
 
+    Eigen::Vector3f result_color = {0, 0, 0};
+    for (auto& light : lights)
+    {
+        Eigen::Vector3f l = light.position-point;
+        float r = l.norm();
+        l = l.normalized();
+        auto I = light.intensity;
+        // TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
+        // components are. Then, accumulate that result on the *result_color* object.
+        auto ambient = ka.cwiseProduct(amb_light_intensity);
+        auto diffuse = kd.cwiseProduct(I)/std::pow(r,2)*MAX(0,n.dot(l));
+        auto specula = ks.cwiseProduct(I)/std::pow(r,2)*MAX(0,std::pow(n.dot(l),p));
+        result_color = result_color + ambient + diffuse + specula;
+    }
     return result_color * 255.f;
 }
 
@@ -288,10 +305,39 @@ Eigen::Vector3f bump_fragment_shader(const fragment_shader_payload& payload)
     // dV = kh * kn * (h(u,v+1/h)-h(u,v))
     // Vector ln = (-dU, -dV, 1)
     // Normal n = normalize(TBN * ln)
+    Eigen::Vector3f n = normal;
+    Eigen::Vector3f t;
+    t << n.x()*n.y()/sqrt(n.x()*n.x()+n.z()*n.z()),sqrt(n.x()*n.x()+n.z()*n.z()),n.z()*n.y()/sqrt(n.x()*n.x()+n.z()*n.z());
+    auto b = n.cross(t);
+    Eigen::Matrix3f TBN;
+    TBN<< t[0],b[0],n[0],t[1],b[1],n[1],t[2],b[2],n[2];
+    if (payload.texture)
+    {
+        auto texture = payload.texture;
+        auto texcord = payload.tex_coords;
+        float u = texcord.x();
+        float v = texcord.y();
+        auto dU = kh*kn*(texture->getColor(u+1.0/texture->width,v).norm()-texture->getColor(u,v).norm());
+        auto dV = kh*kn*(texture->getColor(u,v+1.0/texture->height).norm()-texture->getColor(u,v).norm());
+        Eigen::Vector3f ln({-dU,-dV,1});
+        n = TBN*ln;
+        n = n.normalized();
+    }
 
-
-    Eigen::Vector3f result_color = {0, 0, 0};
-    result_color = normal;
+    Eigen::Vector3f result_color = normal;
+    for (auto& light : lights)
+    {
+        Eigen::Vector3f l = light.position-point;
+        float r = l.norm();
+        l = l.normalized();
+        auto I = light.intensity;
+        // TODO: For each light source in the code, calculate what the *ambient*, *diffuse*, and *specular* 
+        // components are. Then, accumulate that result on the *result_color* object.
+        auto ambient = ka.cwiseProduct(amb_light_intensity);
+        auto diffuse = kd.cwiseProduct(I)/std::pow(r,2)*MAX(0,n.dot(l));
+        auto specula = ks.cwiseProduct(I)/std::pow(r,2)*MAX(0,std::pow(n.dot(l),p));
+        result_color = result_color + ambient + diffuse + specula;
+    }
 
     return result_color * 255.f;
 }
@@ -360,7 +406,7 @@ int main(int argc, const char** argv)
         }
         else if (argc == 3 && std::string(argv[2]) == "displacement")
         {
-            std::cout << "Rasterizing using the bump shader\n";
+            std::cout << "Rasterizing using the displacement shader\n";
             active_shader = displacement_fragment_shader;
         }
     }

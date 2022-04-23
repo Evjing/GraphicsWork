@@ -4,7 +4,7 @@ project(Rasterizer)
 find_package(OpenCV REQUIRED)
 
 set(CMAKE_CXX_STANDARD 17)
-
+set(CMAKE_BUILD_TYPE Debug)
 include_directories(/usr/local/include ./include)
 
 add_executable(Rasterizer main.cpp rasterizer.hpp rasterizer.cpp global.hpp Triangle.hpp Triangle.cpp Texture.hpp Texture.cpp Shader.hpp OBJ_Loader.h)

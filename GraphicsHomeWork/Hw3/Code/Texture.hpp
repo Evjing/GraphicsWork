@@ -14,13 +14,10 @@ private:
 public:
     Texture(const std::string& name)
     {
-        std::cout<<"read textrue:"<<std::endl;
         image_data = cv::imread(name);
-       
         cv::cvtColor(image_data, image_data, cv::COLOR_RGB2BGR);
         width = image_data.cols;
         height = image_data.rows;
-         std::cout<<"width "<<std::endl;
     }
 
     int width, height;
