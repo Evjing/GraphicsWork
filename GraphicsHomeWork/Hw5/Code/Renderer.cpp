@@ -126,7 +126,7 @@ Vector3f castRay(
         int depth)
 {
     if (depth > scene.maxDepth) {
-        return Vector3f(0.0,0.0,0.0);
+        return Vector3f(1,0.0,0.0);
     }
 
     Vector3f hitColor = scene.backgroundColor;

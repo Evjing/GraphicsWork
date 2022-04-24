@@ -22,7 +22,7 @@ bool rayTriangleIntersect(const Vector3f& v0, const Vector3f& v1, const Vector3f
     auto b2 = moller_vector.z;
     u = b1;
     v = b2;
-    if(b1>=0 && b2>=0 && (b1+b2)<=1)
+    if(b1>=0 && b2>=0 && (b1+b2)<=1 && tnear>0)
     {
         return true;
     }else
