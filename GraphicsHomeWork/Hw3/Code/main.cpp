@@ -352,7 +352,7 @@ int main(int argc, const char** argv)
     std::string filename = "output.png";
     objl::Loader Loader;
     std::string obj_path = "../models/spot/";
-
+    
     // Load .obj File
     bool loadout = Loader.LoadFile("../models/spot/spot_triangulated_good.obj");
     for(auto mesh:Loader.LoadedMeshes)
