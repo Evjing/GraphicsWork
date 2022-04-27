@@ -33,9 +33,12 @@ void Renderer::Render(const Scene& scene)
             //  vector that passes through it.
             // Also, don't forget to multiply both of them with the variable
             // *scale*, and x (horizontal) variable with the *imageAspectRatio*
-
             // Don't forget to normalize this direction!
-
+            Vector3f dir = Vector3f(2*x-1, 2*y-1, 0);
+            Vector3f pixelCentre = eye_pos - normalize(eye_pos);
+            dir = normalize(pixelCentre+dir-eye_pos);
+            Ray ray(eye_pos,dir);
+            framebuffer[m++] = scene.castRay(ray, 0);
         }
         UpdateProgress(j / (float)scene.height);
     }
