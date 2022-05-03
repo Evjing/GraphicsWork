@@ -93,7 +93,6 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
             light_dir = emit*m->eval(wo,ray_dir,N)*dotProduct(ray_dir,N)*dotProduct(ws,NN)/pow((x-p).norm(),2)/pdf_light;
         } 
         hitColor += light_dir;
-        
         // indirect light
         Vector3f light_indir(0,0,0);
         if(get_random_float()<=RussianRoulette)
